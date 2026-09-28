@@ -10,8 +10,13 @@ from pathlib import Path
 HOOK = Path(__file__).resolve().parent.parent / "hooks" / "session-title.py"
 
 
+MT_ENV = {"MULMOTERMINAL_HOST": "127.0.0.1", "MULMOTERMINAL_PORT": "34567", "MULMOTERMINAL_SESSION_ID": "abc"}
+
+
 def run(stdin: str, env: dict) -> str:
-    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True, env={**os.environ, **env})
+    # MulmoTerminal のセルの中でテストを走らせても、外側の環境変数で分岐が変わらないようにする。
+    base = {k: v for k, v in os.environ.items() if not k.startswith("MULMOTERMINAL_")}
+    r = subprocess.run([sys.executable, str(HOOK)], input=stdin, capture_output=True, text=True, env={**base, **env})
     assert r.returncode == 0, r.stderr
     return r.stdout
 
@@ -57,6 +62,17 @@ class SessionTitleHook(unittest.TestCase):
         self.assertNotIn("set_pinned", ctx)
         ctx = self.context(run('{"session_id":"def"}', self.env))
         self.assertIn("set_pinned", ctx)
+
+    def test_mulmoterminal_writes_memo_instead(self):
+        ctx = self.context(run('{"session_id":"abc"}', {**self.env, **MT_ENV}))
+        self.assertIn("/api/session/$MULMOTERMINAL_SESSION_ID/memo", ctx)
+        self.assertNotIn("set_session_title", ctx)
+        self.assertNotIn("set_pinned", ctx)
+
+    def test_partial_mulmoterminal_env_is_ignored(self):
+        ctx = self.context(run('{"session_id":"abc"}', {**self.env, "MULMOTERMINAL_PORT": "34567"}))
+        self.assertIn("set_session_title", ctx)
+        self.assertNotIn("/memo", ctx)
 
     def test_bad_input_is_silent(self):
         for stdin in ["", "{}", "not json", '{"session_id":"../x"}', '{"session_id":".hidden"}']:

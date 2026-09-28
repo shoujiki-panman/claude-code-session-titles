@@ -13,7 +13,12 @@ Claude デスクトップアプリ（Claude Code）のセッションの題名�
 
 ## 使える環境
 
-**Claude デスクトップアプリの Code タブだけです。** 題名を変える道具とピン留めの道具は、デスクトップアプリの Claude にしかありません。CLI やほかのアプリで開いた Claude Code でも hook 自体は動きますが、道具が無いので Claude は何もせずに終わります。
+**Claude デスクトップアプリの Code タブと、MulmoTerminal のセルです。**
+
+- **デスクトップアプリ**：題名を変える道具とピン留めの道具を使います。
+- **MulmoTerminal**：題名の道具が無いので、代わりにセッションのメモを MulmoTerminal の API（`POST /api/session/<id>/memo`）で書かせます。メモは題名として最優先で表示されます。ピンに当たるものは無いので、ピンの付け替えはしません。hook は `MULMOTERMINAL_HOST` / `MULMOTERMINAL_PORT` / `MULMOTERMINAL_SESSION_ID` の3つが揃っているかで MulmoTerminal のセルかどうかを見分けます。
+
+それ以外（CLI やほかのアプリで開いた Claude Code）でも hook 自体は動きますが、道具が無いので Claude は何もせずに終わります。
 
 ## 動き
 
