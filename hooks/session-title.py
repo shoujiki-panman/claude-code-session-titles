@@ -15,6 +15,9 @@ from pathlib import Path
 STATE_DIR = Path(os.environ.get("SESSION_TITLE_STATE_DIR", "~/.claude/hooks/state/session-title")).expanduser()
 PREFIX_FILE = Path(os.environ.get("SESSION_TITLE_PREFIX_FILE", "~/.claude/session-title-prefixes.txt")).expanduser()
 KEEP_DAYS = 30
+# MulmoTerminal が使用量メーターの更新に10分おきに立てる使い捨てセッションの ID の頭。答えたらすぐ終了させられるので
+# 題名を付け直す意味が無く、指示を渡すと毎回その分だけ使用量を食う。
+PROBE_SESSION_PREFIX = "f0f0f0f0-1a7e-"
 
 
 def read_prefixes(path: Path) -> list[str]:
@@ -89,7 +92,7 @@ def main() -> int:
     except (json.JSONDecodeError, ValueError):
         return 0
     sid = str(data.get("session_id") or "").strip()
-    if not sid or "/" in sid or sid.startswith("."):
+    if not sid or "/" in sid or sid.startswith(".") or sid.startswith(PROBE_SESSION_PREFIX):
         return 0
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     marker = STATE_DIR / sid

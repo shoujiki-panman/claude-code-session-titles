@@ -74,6 +74,10 @@ class SessionTitleHook(unittest.TestCase):
         self.assertIn("set_session_title", ctx)
         self.assertNotIn("/memo", ctx)
 
+    def test_mulmoterminal_probe_session_is_skipped(self):
+        self.assertEqual(run('{"session_id":"f0f0f0f0-1a7e-4abc-8def-0123456789ab"}', self.env), "")
+        self.assertFalse((Path(self.env["SESSION_TITLE_STATE_DIR"]) / "f0f0f0f0-1a7e-4abc-8def-0123456789ab").exists())
+
     def test_bad_input_is_silent(self):
         for stdin in ["", "{}", "not json", '{"session_id":"../x"}', '{"session_id":".hidden"}']:
             self.assertEqual(run(stdin, self.env), "", stdin)
